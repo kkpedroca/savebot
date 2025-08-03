@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>savebot.tcc.com</title>  <!-- TÍTULO ALTERADO AQUI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #0066FF;
+      --primary-hover: #0052CC;
+      --text-primary: #1A1A1A;
+      --text-secondary: #4D4D4D;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F5F7FA;
+      --border: #E5E7EB;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --radius: 8px;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] {
+      --primary: #3B82F6;
+      --primary-hover: #2563EB;
+      --text-primary: #F3F4F6;
+      --text-secondary: #D1D5DB;
+      --bg-primary: #111827;
+      --bg-secondary: #1F2937;
+      --border: #374151;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+      transition: all 0.3s ease;
+    }
+
+    @supports (font-variation-settings: normal) {
+      body { font-family: 'Inter var', sans-serif; }
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    .logo-icon {
+      color: var(--primary);
+      font-size: 1.5rem;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--primary);
+      transform: rotate(30deg);
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      height: 100%;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      background-color: var(--bg-secondary);
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 1.5rem;
+    }
+
+    .new-chat-btn:hover {
+      background-color: var(--primary-hover);
+      box-shadow: var(--shadow);
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    .history-item:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .history-item.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user-message .message-content {
+      background-color: var(--primary);
+      color: white;
+      border-radius: var(--radius) var(--radius) 0 var(--radius);
+      margin-left: auto;
+    }
+
+    .ai-message .message-content {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      border-radius: var(--radius) var(--radius) var(--radius) 0;
+      margin-right: auto;
+    }
+
+    .message-content {
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+      box-shadow: var(--shadow);
+    }
+
+    .message-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .user-message .message-time {
+      justify-content: flex-end;
+    }
+
+    .message-content pre {
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: var(--radius);
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 0.5rem 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+    }
+
+    .message-content code {
+      background-color: rgba(0, 0, 0, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+    }
+
+    .message-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.5rem 0;
+    }
+
+    .message-content th, 
+    .message-content td {
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    .message-content th {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .typing-indicator {
+      display: inline-flex;
+      padding: 0.75rem 1rem;
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 0.375rem;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--text-secondary);
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .input-area {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      background-color: var(--bg-primary);
+      position: sticky;
+      bottom: 0;
+    }
+
+    .input-container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .chat-input {
+      width: 100%;
+      padding: 1rem 4rem 1rem 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      resize: none;
+      min-height: 60px;
+      max-height: 200px;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.2);
+    }
+
+    .send-button {
+      position: absolute;
+      right: 1rem;
+      bottom: 1rem;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .send-button:hover {
+      background-color: var(--primary-hover);
+      transform: scale(1.05);
+    }
+
+    .send-button:disabled {
+      background-color: var(--border);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .model-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .progress-bar {
+      width: 100%;
+      max-width: 300px;
+      height: 8px;
+      background-color: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+      
+      .message {
+        max-width: 100%;
+      }
+      
+      .chat-input {
+        padding-right: 3.5rem;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">
+        <i class="fas fa-robot logo-icon"></i>
+        <span>Save Bot</span>
+      </div>
+      <div class="nav-controls">
+        <button class="theme-toggle" id="theme-toggle">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar">
+        <button class="new-chat-btn" id="new-chat-btn">
+          <i class="fas fa-plus"></i>
+          Nova conversa
+        </button>
+        
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">Histórico</h3>
+          <div id="history-list">
+            <!-- Histórico será preenchido via JS -->
+          </div>
+        </div>
+      </aside>
+
+      <main class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+          <div class="model-loading" id="model-loading">
+            <h3>Carregando Save Bot</h3>
+            <p>O assistente de IA está sendo preparado para uso local...</p>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <small>Isso pode levar alguns minutos apenas na primeira execução.</small>
+          </div>
+        </div>
+
+        <div class="input-area">
+          <div class="input-container">
+            <textarea 
+              class="chat-input" 
+              id="user-input" 
+              placeholder="Digite sua pergunta sobre computação..."
+              rows="1"
+              disabled
+            ></textarea>
+            <button class="send-button" id="send-btn" disabled>
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    // Configurações atualizadas da IA
+    const AI_CONFIG = {
+      model: 'Xenova/LaMini-Flan-T5-248M', // Modelo mais estável
+      systemPrompt: `Você é o Save Bot, um assistente de IA especializado em computação com conhecimentos avançados sobre:
+      - Hardware (PCs, notebooks, componentes)
+      - Sistemas Operacionais (Windows, Linux, macOS)
+      - Redes e Infraestrutura
+      - Programação e Desenvolvimento
+      - Segurança da Informação
+      
+      Diretrizes:
+      1. Seja preciso e técnico, mas adapte a complexidade ao usuário
+      2. Formate códigos com \`\`\`linguagem\ncódigo\n\`\`\`
+      3. Para listas longas, use markdown
+      4. Inclua soluções alternativas quando relevante
+      5. Mantenha respostas objetivas mas completas`,
+      maxTokens: 750,
+      temperature: 0.7
+    };
+
+    // Elementos da UI
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const newChatBtn = document.getElementById('new-chat-btn');
+    const themeToggle = document.getElementById('theme-toggle');
+    const historyList = document.getElementById('history-list');
+    const modelLoading = document.getElementById('model-loading');
+    const progressFill = document.getElementById('progress-fill');
+
+    // Estado da aplicação
+    let pipeline;
+    let isGenerating = false;
+    let currentConversation = [];
+    let conversationHistory = [];
+    let modelLoaded = false;
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Carrega o tema salvo
+      loadTheme();
+      
+      // Carrega o histórico
+      loadConversationHistory();
+      
+      // Inicializa o modelo de IA
+      await initializeModel();
+      
+      // Habilita a interface
+      userInput.disabled = false;
+      sendBtn.disabled = false;
+      userInput.focus();
+      
+      // Mensagem inicial
+      if (currentConversation.length === 0) {
+        addMessage('ai', `👋 Olá! Sou o **Save Bot**, seu assistente de IA especializado em computação.\n\nPosso ajudar com:\n- Solução de problemas técnicos\n- Configuração de sistemas\n- Otimização de desempenho\n- Dúvidas sobre programação\n\nComo posso ajudar você hoje?`);
+      }
+    });
+
+    // Event Listeners
+    sendBtn.addEventListener('click', sendMessage);
+    newChatBtn.addEventListener('click', startNewChat);
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
+        e.preventDefault();
+        sendMessage();
+      }
+      
+      // Auto-resize do textarea
+      if (e.key === 'Enter' || e.key === 'Backspace') {
+        setTimeout(() => {
+          userInput.style.height = 'auto';
+          userInput.style.height = `${Math.min(userInput.scrollHeight, 200)}px`;
+        }, 0);
+      }
+    });
+
+    // Inicializa o modelo de IA com carregamento progressivo
+    async function initializeModel() {
+      try {
+        // Mostra o progresso de carregamento
+        const { pipeline: transformersPipeline } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.5.0/dist/transformers.min.js');
+        
+        // Configura callbacks de progresso
+        const callbacks = {
+          progress: (progress) => {
+            const percent = Math.round(progress.loaded / progress.total * 100);
+            progressFill.style.width = `${percent}%`;
+            
+            if (percent === 100) {
+              modelLoading.innerHTML = `
+                <h3>Otimizando Save Bot</h3>
+                <p>Preparando o assistente para respostas ultrarrápidas...</p>
+                <div class="progress-bar">
+                  <div class="progress-fill pulse" style="width: 100%"></div>
+                </div>
+              `;
+            }
+          }
+        };
+        
+        // Carrega o modelo quantizado - CORREÇÃO: Mudamos para text2text-generation
+        pipeline = await transformersPipeline(
+          'text2text-generation', // Tipo corrigido para o modelo
+          AI_CONFIG.model,
+          { 
+            progress_callback: callbacks.progress,
+            quantized: true
+          }
+        );
+        
+        // Esconde o indicador de carregamento
+        modelLoading.style.display = 'none';
+        modelLoaded = true;
+        
+      } catch (error) {
+        console.error("Erro ao carregar o modelo:", error);
+        modelLoading.innerHTML = `
+          <h3 style="color: var(--error)">Erro ao Carregar</h3>
+          <p>Não foi possível carregar o Save Bot localmente. Recarregue a página.</p>
+          <small>${error.message}</small>
+        `;
+      }
+    }
+
+    // Função de envio CORRIGIDA
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message || isGenerating || !modelLoaded) return;
+      
+      // Adiciona mensagem do usuário
+      addMessage('user', message);
+      currentConversation.push({ role: 'user', content: message });
+      userInput.value = '';
+      userInput.style.height = 'auto';
+      isGenerating = true;
+      sendBtn.disabled = true;
+      
+      try {
+        // Mostra indicador de digitação
+        showTypingIndicator();
+        
+        // Prepara o prompt corretamente para o modelo T5
+        const prompt = `${AI_CONFIG.systemPrompt}\n\nUsuário: ${message}\n\nAssistente:`;
+        
+        // Gera a resposta com os parâmetros adequados
+        const response = await pipeline(prompt, {
+          max_new_tokens: AI_CONFIG.maxTokens,
+          temperature: AI_CONFIG.temperature,
+          do_sample: true,
+          no_repeat_ngram_size: 2
+        });
+        
+        // Processa a resposta
+        let aiResponse = response[0].generated_text;
+        
+        // Remove o prompt da resposta se estiver presente
+        if (aiResponse.includes(prompt)) {
+          aiResponse = aiResponse.replace(prompt, '').trim();
+        }
+        
+        // Formata a resposta
+        aiResponse = formatMarkdown(aiResponse);
+        
+        // Adiciona à conversa
+        addMessage('ai', aiResponse);
+        currentConversation.push({ role: 'assistant', content: aiResponse });
+        
+        // Salva no histórico
+        saveToHistory(message, aiResponse);
+        
+      } catch (error) {
+        console.error("Erro ao gerar resposta:", error);
+        addMessage('ai', `⚠️ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.`);
+      } finally {
+        hideTypingIndicator();
+        isGenerating = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    // Funções auxiliares
+    function formatMarkdown(text) {
+      // Códigos
+      text = text.replace(/```(\w+)?\n([\s\S]+?)```/g, '<pre>$2</pre>');
+      
+      // Links
+      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+      
+      // Listas
+      text = text.replace(/^\s*-\s(.+)/gm, '<li>$1</li>');
+      text = text.replace(/^\s*\*\s(.+)/gm, '<li>$1</li>');
+      text = text.replace(/^\s*\d+\.\s(.+)/gm, '<li>$1</li>');
+      
+      // Negrito e itálico
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
+      
+      return text;
+    }
+
+    function addMessage(role, content) {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}-message`;
+      messageDiv.innerHTML = `
+        <div class="message-content">${content}</div>
+        <div class="message-time">
+          <i class="far fa-clock"></i>
+          ${timeString}
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message ai-message';
+      typingDiv.id = 'typing-indicator';
+      typingDiv.innerHTML = `
+        <div class="message-content typing-indicator">
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      const typing = document.getElementById('typing-indicator');
+      if (typing) typing.remove();
+    }
+
+    function startNewChat() {
+      if (currentConversation.length > 0) {
+        conversationHistory.push({
+          id: Date.now(),
+          title: currentConversation[0].content.substring(0, 30) + (currentConversation[0].content.length > 30 ? '...' : ''),
+          messages: [...currentConversation]
+        });
+        
+        saveHistory();
+      }
+      
+      currentConversation = [];
+      chatMessages.innerHTML = '';
+      
+      addMessage('ai', `🔄 Iniciando nova conversa. Como posso ajudar você com computação hoje?`);
+    }
+
+    function loadConversationHistory() {
+      const saved = localStorage.getItem('techhelper_history');
+      if (saved) {
+        conversationHistory = JSON.parse(saved);
+        renderHistoryList();
+      }
+    }
+
+    function renderHistoryList() {
+      historyList.innerHTML = '';
+      
+      conversationHistory.slice().reverse().forEach(conv => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+          <i class="far fa-comment"></i>
+          ${conv.title}
+        `;
+        
+        item.addEventListener('click', () => loadConversation(conv.id));
+        historyList.appendChild(item);
+      });
+    }
+
+    function loadConversation(id) {
+      const conversation = conversationHistory.find(c => c.id === id);
+      if (!conversation) return;
+      
+      currentConversation = [...conversation.messages];
+      chatMessages.innerHTML = '';
+      
+      conversation.messages.forEach(msg => {
+        addMessage(msg.role, msg.content);
+      });
+    }
+
+    function saveToHistory(userMessage, aiResponse) {
+      if (currentConversation.length === 2) { // Nova conversa
+        conversationHistory.push({
+          id: Date.now(),
+          title: userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : ''),
+          messages: [
+            { role: 'user', content: userMessage },
+            { role: 'assistant', content: aiResponse }
+          ]
+        });
+      } else if (currentConversation.length > 2) { // Conversa existente
+        const conv = conversationHistory.find(c => 
+          c.messages.some(m => m.content === currentConversation[0].content)
+        );
+        
+        if (conv) {
+          conv.messages = [...currentConversation];
+        }
+      }
+      
+      saveHistory();
+    }
+
+    function saveHistory() {
+      localStorage.setItem('techhelper_history', JSON.stringify(conversationHistory));
+      renderHistoryList();
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('techhelper_theme', isDark ? 'light' : 'dark');
+      
+      themeToggle.innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+    }
+
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('techhelper_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      themeToggle.innerHTML = savedTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    }
+  </script>
+</body>
+</html>
